@@ -1,0 +1,17 @@
+{
+  "name": "viem-signtypeddata",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "createLock": "node --env-file=.env veToken-createLock.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "viem": "^2.21.22"
+  },
+  "type": "module"
+}
