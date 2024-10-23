@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "createLock": "node --env-file=.env veToken-createLock.js",
-    "addLiquidity": "node --env-file=.env universalRouter-addLiquidity.js >> out.txt"
+    "addLiquidity": "node --env-file=.env universalRouter-addLiquidity.js",
+    "addLiquidity2": "node --env-file=.env universalRouter-addLiquidity2.js"
   },
   "keywords": [],
   "author": "",
