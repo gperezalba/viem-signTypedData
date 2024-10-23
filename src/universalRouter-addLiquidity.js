@@ -1,17 +1,14 @@
 import { createPublicClient, http, createWalletClient, getContract, parseSignature, verifyTypedData, parseUnits, encodeAbiParameters, getAbiItem, parseEther, zeroHash, maxUint256 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { sepolia } from "viem/chains"
-import { FACTORY_ABI } from "./FACTORY_ABI.js"
-import { VOTER_ABI } from "./VOTER_ABI.js"
-import { GAUGE_ABI } from "./GAUGE_ABI.js"
-import { PAIR_ABI } from "./PAIR_ABI.js"
+import { UNIVERSAL_ROUTER_ABI } from "../abis/UNIVERSAL_ROUTER_ABI.js"
+import { GT3_ABI } from "../abis/GT3_ABI.js"
 
 const MY_SEPOLIA_RPC = process.env.RPC
 const PRIVATE_KEY = process.env.PRIVATE_KEY
-const VOTER_ADDRESS = process.env.VOTER_ADDRESS
-const FACTORY_ADDRESS = process.env.FACTORY_ADDRESS
+const ROUTER_ADDRESS = process.env.ROUTER_ADDRESS
 const GT3_ADDRESS = process.env.GT3_ADDRESS
-const WBTC_ADDRESS = process.env.WBTC_ADDRESS
+const USDT_ADDRESS = process.env.USDT_ADDRESS
 
 const client = createPublicClient({
     chain: sepolia,
@@ -23,17 +20,24 @@ const walletClient = createWalletClient({
     transport: http(MY_SEPOLIA_RPC)
 })
 
-const voterContract = getContract({
-    address: VOTER_ADDRESS,
-    abi: VOTER_ABI,
+const gt3Contract = getContract({
+    address: GT3_ADDRESS,
+    abi: GT3_ABI,
     client: client,
 })
 
-const factoryContract = getContract({
-    address: FACTORY_ADDRESS,
-    abi: FACTORY_ABI,
+const routerContract = getContract({
+    address: ROUTER_ADDRESS,
+    abi: UNIVERSAL_ROUTER_ABI,
     client: client,
 })
+
+const domain = {
+    name: "GT3 Token",
+    version: "1",
+    chainId: 11155111,
+    verifyingContract: GT3_ADDRESS,
+}
 
 const types = {
     Permit: [
@@ -47,33 +51,18 @@ const types = {
 
 async function main() {
     const account = privateKeyToAccount(PRIVATE_KEY)
+    const userPermitNonce = await gt3Contract.read.nonces([account.address])
 
-    const pairAddress = await factoryContract.read.getPair([WBTC_ADDRESS, GT3_ADDRESS])
-    const pairContract = getContract({
-        address: pairAddress,
-        abi: PAIR_ABI,
-        client: client,
-    })
-
-    const userPermitNonce = await pairContract.read.nonces([account.address])
-    const pairName = await pairContract.read.name()
-
-    const domain = {
-        name: pairName,
-        version: "1",
-        chainId: 11155111,
-        verifyingContract: pairAddress,
-    }
-
-    const gaugeAddress = await voterContract.read.gauges([pairAddress])
-    const pairBalance = await pairContract.read.balanceOf([account.address])
     const message = {
         owner: account.address,
-        spender: gaugeAddress,
-        value: pairBalance,
+        spender: ROUTER_ADDRESS,
+        value: parseEther("1"),
         nonce: userPermitNonce,
         deadline: 115792089237316195423570985008687907853269984665640564039457584007913129639935n //usar parseInt(Date.now() / 1000) + 600 p.ej
     }
+
+    //hago esto para ahorrar tiempo, hacedlo como lo tengáis
+    const quote = await routerContract.read.quoteAddLiquidity([GT3_ADDRESS, USDT_ADDRESS, message.value, maxUint256])
 
     const signature = await walletClient.signTypedData({
         account,
@@ -85,15 +74,19 @@ async function main() {
     const parsedSignature = parseSignature(signature)
 
     await walletClient.writeContract({
-        address: gaugeAddress,
-        abi: GAUGE_ABI,
-        functionName: "deposit",
+        address: ROUTER_ADDRESS,
+        abi: UNIVERSAL_ROUTER_ABI,
+        functionName: "addLiquidityWithPermit",
         args: [
-            message.value,
+            [GT3_ADDRESS, USDT_ADDRESS],
+            [message.value, quote[1]],
+            [0n, 0n], //esto no será 0, pero ya lo tendréis calculado, eso sigue igual
+            account.address,
             message.deadline,
-            parsedSignature.v,
-            parsedSignature.r,
-            parsedSignature.s
+            [
+                { v: parsedSignature.v, r: parsedSignature.r, s: parsedSignature.s },
+                { v: BigInt(0), r: zeroHash, s: zeroHash }
+            ]
         ],
         account
     })

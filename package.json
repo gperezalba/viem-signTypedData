@@ -6,9 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "createLock": "node --env-file=.env veToken-createLock.js",
-    "addLiquidity": "node --env-file=.env universalRouter-addLiquidity.js",
-    "addLiquidity2": "node --env-file=.env universalRouter-addLiquidity2.js",
-    "gauge-deposit": "node --env-file=.env gauge-deposit.js"
+    "addLiquidity": "node --env-file=.env src/universalRouter-addLiquidity.js",
+    "addLiquidity2": "node --env-file=.env src/universalRouter-addLiquidity2.js",
+    "gauge-deposit": "node --env-file=.env src/gauge-deposit.js"
   },
   "keywords": [],
   "author": "",

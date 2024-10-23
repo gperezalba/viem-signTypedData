@@ -1,8 +1,8 @@
 import { createPublicClient, http, createWalletClient, getContract, parseSignature, verifyTypedData, parseUnits, encodeAbiParameters, getAbiItem, parseEther, zeroHash, maxUint256 } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { sepolia } from "viem/chains"
-import { UNIVERSAL_ROUTER_ABI } from "./UNIVERSAL_ROUTER_ABI.js"
-import { GT3_ABI } from "./GT3_ABI.js"
+import { UNIVERSAL_ROUTER_ABI } from "../abis/UNIVERSAL_ROUTER_ABI.js"
+import { GT3_ABI } from "../abis/GT3_ABI.js"
 
 const MY_SEPOLIA_RPC = process.env.RPC
 const PRIVATE_KEY = process.env.PRIVATE_KEY
